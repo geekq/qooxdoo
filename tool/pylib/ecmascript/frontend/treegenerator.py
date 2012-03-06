@@ -62,6 +62,8 @@ pp.afterDoc      = None
 pp.afterDivider  = None
 pp.afterArea     = None
 
+token = None
+
 
 ATOMS = ["string", "number", "identifier"]
 
@@ -145,6 +147,7 @@ class TokenStream(IterObject):
 
 
     def _symbolFromToken(self, tok):
+        global token
         s = None
 
         # TODO: Stuff for another refac:
@@ -152,10 +155,12 @@ class TokenStream(IterObject):
         # provided the tokens with the right attributes (esp. name, detail).
 
         # tok isinstanceof Token()
-        if (tok.name == "white"
-            or tok.name == 'comment'):
-            #pass
+        if tok.name == "white":
             s = symbol_table.get(tok.name)()
+        elif tok.name == 'comment':
+            s = symbol_table.get(tok.name)()
+            if token: # relying on a <file> top-level token
+                token.comments.append(s)
         elif tok.name == "eol":
             self.line += 1                  # increase line count
             #pass # don't yield this (yet)
@@ -284,6 +289,7 @@ class symbol_base(Node):
             self.set("line", line)
         if column:
             self.set("column", column)
+        self.comments = []
 
     ##
     # thin wrapper around .children, to maintain .parent in them
@@ -1997,7 +2003,9 @@ class TreeGenerator(object):
 # - Interface -----------------------------------------------------------------
 
 def createSyntaxTree(tokenArr, fileId=''):
+    global token
     fileNode = symbol("file")(0,0)
+    token = fileNode
     fileNode.set("file", fileId)
     fileNode.childappend(TreeGenerator().parse(tokenArr))
     return fileNode
