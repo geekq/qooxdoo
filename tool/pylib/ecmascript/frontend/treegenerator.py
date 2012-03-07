@@ -1252,6 +1252,7 @@ def std(self):
         chunk = expression()
     else:
         chunk = None
+
     # for (.. in ..)
     if chunk and chunk.id == 'in':
         self.set("forVariant", "in")
